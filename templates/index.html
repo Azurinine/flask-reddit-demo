@@ -50,6 +50,10 @@
         align-items: center;
         gap: 6px;
       }
+      .votes form {
+        margin: 0;
+        padding: 0;
+      }
       button {
         appearance: none;
         border: 1px solid rgba(127, 127, 127, 0.4);
@@ -91,9 +95,13 @@
         {% for link in links %}
         <li>
           <div class="votes">
-            <button class="up">▲</button>
-            <div class="score" data-score>{{ link.score }}</div>
-            <button class="down">▼</button>
+            <form method="post" action="/upvote/{{ link.id }}">
+              <button class="up">▲</button>
+            </form>
+            <div class="score">{{ link.score }}</div>
+            <form method="post" action="/downvote/{{ link.id }}">
+              <button class="down">▼</button>
+            </form>
           </div>
           <div class="content">
             <p class="title">

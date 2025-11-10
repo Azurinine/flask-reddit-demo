@@ -39,7 +39,7 @@
       }
       li {
         display: grid;
-        grid-template-columns: 56px 1fr;
+        grid-template-columns: 56px 1fr auto;
         gap: 12px;
         padding: 12px 0;
         border-bottom: 1px solid rgba(127, 127, 127, 0.2);
@@ -132,6 +132,26 @@
         margin-bottom: 16px;
         font-size: 14px;
       }
+      .hide-button {
+        background: rgba(127, 127, 127, 0.1);
+        border: 1px solid rgba(127, 127, 127, 0.3);
+        padding: 8px 12px;
+        font-size: 13px;
+        align-self: flex-start;
+      }
+      .hide-button:hover {
+        background: rgba(127, 127, 127, 0.2);
+      }
+      .hidden-section {
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 2px solid rgba(127, 127, 127, 0.3);
+      }
+      .hidden-section h2 {
+        font-size: 18px;
+        margin: 0 0 16px;
+        color: gray;
+      }
     </style>
   </head>
 
@@ -200,9 +220,53 @@
               >{{ link.url }}</a
             >
           </div>
+          <form method="post" action="/hide/{{ link.id }}">
+            <button class="hide-button">Hide</button>
+          </form>
         </li>
         {% endfor %}
       </ul>
+
+      {% if hidden_links %}
+      <div class="hidden-section">
+        <h2>Hidden posts</h2>
+        <ul>
+          {% for link in hidden_links %}
+          <li>
+            <div class="votes">
+              <form method="post" action="/upvote/{{ link.id }}">
+                <button class="up">▲</button>
+              </form>
+              <div class="score">{{ link.score }}</div>
+              <form method="post" action="/downvote/{{ link.id }}">
+                <button class="down">▼</button>
+              </form>
+            </div>
+            <div class="content">
+              <p class="title">
+                <a
+                  href="{{ link.url }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ link.title }}</a
+                >
+              </p>
+              <a
+                class="url"
+                href="{{ link.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                >{{ link.url }}</a
+              >
+            </div>
+            <form method="post" action="/hide/{{ link.id }}">
+              <button class="hide-button">Unhide</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
     </main>
   </body>
 </html>

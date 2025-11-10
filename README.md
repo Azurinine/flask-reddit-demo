@@ -16,7 +16,7 @@ items—first in memory, then persisted to SQLite.
 
 ---
 
-## Part 1: Getting set up 
+## Part 1: Getting set up
 
 **Requirements**
 
@@ -56,7 +56,7 @@ Open `http://127.0.0.1:5000/` and confirm you see the dog links.
 
 ---
 
-## Part 2: Add features 
+## Part 2: Add features
 
 You’ll add three features by mutating the `dog_links` variable. All actions
 should update state on the server, then **redirect** back to `/` so the page
@@ -108,16 +108,16 @@ refreshes with the latest data.
 
 ---
 
-## Part 3: Bug‑finding competition 
+## Part 3: Bug‑finding competition
 
-1. **Swap projects** with another person on your team. 
+1. **Swap projects** with another person on your team.
 2. **Find as many bugs as possible** (logic, UI, validation, sorting edge cases).
 3. **Document each bug** with steps, expected vs. actual, and a screenshot if helpful.
 4. **Share your findings** with the original author. Discuss overlaps and prevention ideas.
 
 ---
 
-## Part 4: Feature request — persistence with SQLite 
+## Part 4: Feature request — persistence with SQLite
 
 Right now `dog_links` resets on restart (e.g. if you stop the Flask app and restart it, the dog links will reset back to its original state). Add persistence with `sqlite3` so posts, votes, and hidden state survive restarts.
 
@@ -143,7 +143,6 @@ Right now `dog_links` resets on restart (e.g. if you stop the Flask app and rest
 2. New posts are stored with score `1` by default.
 3. Hidden state persists across restarts.
 4. Visible posts always appear sorted by `score` descending.
-
 
 ## Optional stretch goals!
 

@@ -18,4 +18,5 @@ dist/
 # macOS
 .DS_Store
 
-
+# Database
+reddit.db

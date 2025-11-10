@@ -1,57 +1,85 @@
+import sqlite3
+
 from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
-dog_links = [
-    {
-        "id": 0,
-        "title": "30 Fun and Fascinating Dog Facts",
-        "url": "https://www.akc.org/expert-advice/lifestyle/dog-facts/",
-        "score": 10,
-        "hidden": False,
-    },
-    {
-        "id": 1,
-        "title": "Why Do Dogs Tilt Their Heads?",
-        "url": "https://www.sciencefocus.com/nature/why-do-dogs-tilt-their-head-when-you-speak-to-them",
-        "score": 5,
-        "hidden": False,
-    },
-    {
-        "id": 2,
-        "title": "r/dogs — top posts",
-        "url": "https://www.reddit.com/r/dogs/",
-        "score": 3,
-        "hidden": False,
-    },
-    {
-        "id": 3,
-        "title": "Basic Dog Training Guide",
-        "url": "https://www.animalhumanesociety.org/resource/how-get-most-out-training-your-dog",
-        "score": 2,
-        "hidden": False,
-    },
-    {
-        "id": 4,
-        "title": "The Dogist (photo stories)",
-        "url": "https://thedogist.com/",
-        "score": 1,
-        "hidden": False,
-    },
-]
+DATABASE = "reddit.db"
+
+
+def get_db():
+    """Get a database connection."""
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    """Initialize the database with schema and default data."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            score INTEGER DEFAULT 1,
+            hidden INTEGER DEFAULT 0
+        )
+    """)
+
+    cursor.execute("SELECT COUNT(*) FROM posts")
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        default_posts = [
+            (
+                "30 Fun and Fascinating Dog Facts",
+                "https://www.akc.org/expert-advice/lifestyle/dog-facts/",
+                10,
+                0,
+            ),
+            (
+                "Why Do Dogs Tilt Their Heads?",
+                "https://www.sciencefocus.com/nature/why-do-dogs-tilt-their-head-when-you-speak-to-them",
+                5,
+                0,
+            ),
+            ("r/dogs — top posts", "https://www.reddit.com/r/dogs/", 3, 0),
+            (
+                "Basic Dog Training Guide",
+                "https://www.animalhumanesociety.org/resource/how-get-most-out-training-your-dog",
+                2,
+                0,
+            ),
+            ("The Dogist (photo stories)", "https://thedogist.com/", 1, 0),
+        ]
+        cursor.executemany(
+            "INSERT INTO posts (title, url, score, hidden) VALUES (?, ?, ?, ?)",
+            default_posts,
+        )
+
+    conn.commit()
+    conn.close()
+
+
+# Initialize database on startup
+init_db()
 
 
 @app.get("/")
 def homepage():
-    visible_links = [
-        link for link in dog_links if not link.get("hidden", False)
-    ]
-    hidden_links = [link for link in dog_links if link.get("hidden", False)]
+    conn = get_db()
+    cursor = conn.cursor()
 
-    visible_links = sorted(
-        visible_links, key=lambda x: x["score"], reverse=True
-    )
-    hidden_links = sorted(hidden_links, key=lambda x: x["score"], reverse=True)
+    cursor.execute("SELECT * FROM posts WHERE hidden = 0 ORDER BY score DESC")
+    visible_links = [dict(row) for row in cursor.fetchall()]
+
+    cursor.execute("SELECT * FROM posts WHERE hidden = 1 ORDER BY score DESC")
+    hidden_links = [dict(row) for row in cursor.fetchall()]
+
+    conn.close()
 
     error = request.args.get("error")
     return render_template(
@@ -64,26 +92,44 @@ def homepage():
 
 @app.post("/upvote/<int:link_id>")
 def upvote(link_id):
-    link = next((link for link in dog_links if link["id"] == link_id), None)
-    if link:
-        link["score"] += 1
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE posts SET score = score + 1 WHERE id = ?", (link_id,)
+    )
+    conn.commit()
+    conn.close()
     return redirect(url_for("homepage"))
 
 
 @app.post("/downvote/<int:link_id>")
 def downvote(link_id):
-    link = next((link for link in dog_links if link["id"] == link_id), None)
-    if link:
-        link["score"] -= 1
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE posts SET score = score - 1 WHERE id = ?", (link_id,)
+    )
+    conn.commit()
+    conn.close()
     return redirect(url_for("homepage"))
 
 
 @app.post("/hide/<int:link_id>")
 def hide(link_id):
-    for link in dog_links:
-        if link["id"] == link_id:
-            link["hidden"] = not link.get("hidden", False)
-            break
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT hidden FROM posts WHERE id = ?", (link_id,))
+    row = cursor.fetchone()
+
+    if row:
+        new_hidden = 1 - row["hidden"]
+        cursor.execute(
+            "UPDATE posts SET hidden = ? WHERE id = ?", (new_hidden, link_id)
+        )
+        conn.commit()
+
+    conn.close()
     return redirect(url_for("homepage"))
 
 
@@ -98,15 +144,13 @@ def submit():
     if not url.startswith("http"):
         return redirect(url_for("homepage", error="URL must start with http"))
 
-    # Create new post with next available ID
-    new_id = max(link["id"] for link in dog_links) + 1 if dog_links else 0
-    new_post = {
-        "id": new_id,
-        "title": title,
-        "url": url,
-        "score": 1,
-        "hidden": False,
-    }
-    dog_links.append(new_post)
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO posts (title, url, score, hidden) VALUES (?, ?, 1, 0)",
+        (title, url),
+    )
+    conn.commit()
+    conn.close()
 
     return redirect(url_for("homepage"))

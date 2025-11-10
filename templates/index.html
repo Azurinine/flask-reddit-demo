@@ -80,6 +80,58 @@
       a {
         color: inherit;
       }
+      .submit-form {
+        background: rgba(127, 127, 127, 0.1);
+        border: 1px solid rgba(127, 127, 127, 0.25);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+      .submit-form h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+      .form-group {
+        margin-bottom: 12px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid rgba(127, 127, 127, 0.4);
+        border-radius: 4px;
+        background: Canvas;
+        color: CanvasText;
+        box-sizing: border-box;
+      }
+      .submit-button {
+        background: rgba(0, 122, 255, 0.9);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .submit-button:hover {
+        background: rgba(0, 122, 255, 1);
+      }
+      .error {
+        background: rgba(255, 59, 48, 0.15);
+        border: 1px solid rgba(255, 59, 48, 0.4);
+        color: rgb(255, 69, 58);
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
     </style>
   </head>
 
@@ -91,6 +143,37 @@
     </header>
 
     <main class="container">
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <div class="submit-form">
+        <h2>Submit a New Post</h2>
+        <form method="post" action="/submit">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              placeholder="Enter post title"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="url">URL</label>
+            <input
+              type="text"
+              id="url"
+              name="url"
+              placeholder="https://example.com"
+              required
+            />
+          </div>
+          <button type="submit" class="submit-button">Submit Post</button>
+        </form>
+      </div>
+
       <ul>
         {% for link in links %}
         <li>

@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, url_for
+from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
@@ -39,7 +39,8 @@ dog_links = [
 @app.get("/")
 def homepage():
     links = sorted(dog_links, key=lambda x: x["score"], reverse=True)
-    return render_template("index.html", links=links)
+    error = request.args.get("error")
+    return render_template("index.html", links=links, error=error)
 
 
 @app.post("/upvote/<int:link_id>")
@@ -55,4 +56,23 @@ def downvote(link_id):
     link = next((link for link in dog_links if link["id"] == link_id), None)
     if link:
         link["score"] -= 1
+    return redirect(url_for("homepage"))
+
+
+@app.post("/submit")
+def submit():
+    title = request.form.get("title", "").strip()
+    url = request.form.get("url", "").strip()
+
+    if not title:
+        return redirect(url_for("homepage", error="Title cannot be empty"))
+
+    if not url.startswith("http"):
+        return redirect(url_for("homepage", error="URL must start with http"))
+
+    # Create new post with next available ID
+    new_id = max(link["id"] for link in dog_links) + 1 if dog_links else 0
+    new_post = {"id": new_id, "title": title, "url": url, "score": 1}
+    dog_links.append(new_post)
+
     return redirect(url_for("homepage"))

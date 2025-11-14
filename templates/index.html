@@ -111,10 +111,66 @@
           </div>
         </li>
         {% endfor %}
+        <form onsubmit="return handleCreate(event)">
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title" required></input>
+          <label for="url">Url:</label>
+          <input type="url" id="url" name="url" required></input>
+          <input type="submit" value="Create"></input>
+        </form>
       </ul>
     </main>
 
     <script>
+      function handleCreate(event) {
+        event.preventDefault(); // Prevent form from submitting normally
+        
+        const title = document.getElementById('title').value.trim();
+        const url = document.getElementById('url').value.trim();
+        
+        // Frontend validation
+        if (!title || title.length === 0) {
+          alert('Title is required');
+          return false;
+        }
+        
+        if (!url || url.length === 0) {
+          alert('URL is required');
+          return false;
+        }
+        
+        // Basic URL validation - must start with http:// or https://
+        if (!url.startsWith("http")) {
+          alert('URL must start with http');
+          return false;
+        }
+        
+        // If validation passes, send to backend
+        fetch('/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title: title, url: url })
+        })
+        .then(response => {
+          if (response.ok) {
+            // Redirect to "/" to reload the page with new link
+            window.location.href = '/';
+          } else {
+            return response.json().then(data => {
+              alert('Error: ' + (data.error || 'Failed to create link'));
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred. Please try again.');
+        });
+        
+        return false;
+      }
+
       function vote(url, direction) {
         fetch('/vote', {
           method: 'POST',
@@ -123,38 +179,18 @@
           },
           body: JSON.stringify({ url: url, direction: direction })
         })
-        .then(response => response.json())
-        .then(data => {
-          // Update the score for this specific link
-          const scoreElement = document.querySelector(`[data-url="${url}"]`);
-          if (scoreElement) {
-            scoreElement.textContent = data.score;
+        .then(response => {
+          if (response.ok) {
+            // Redirect to "/" to reload the page with sorted data
+            window.location.href = '/';
+          } else {
+            console.error('Vote failed');
           }
-          // Re-sort the list after voting
-          sortByVotes();
         })
         .catch(error => {
           console.error('Error:', error);
         });
       }
-
-      function sortByVotes() {
-        const ul = document.querySelector('ul');
-        const items = Array.from(ul.querySelectorAll('li'));
-        
-        // Sort items by their score (highest first)
-        items.sort((a, b) => {
-          const scoreA = parseInt(a.querySelector('.score').textContent) || 0;
-          const scoreB = parseInt(b.querySelector('.score').textContent) || 0;
-          return scoreB - scoreA; // Descending order (highest first)
-        });
-        
-        // Re-append sorted items to the list
-        items.forEach(item => ul.appendChild(item));
-      }
-      
-      // Sort on page load
-      document.addEventListener('DOMContentLoaded', sortByVotes);
     </script>
   </body>
 </html>

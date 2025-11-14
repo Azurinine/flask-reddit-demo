@@ -33,7 +33,41 @@ dog_links = [
 
 @app.get("/")
 def homepage():
-    return render_template("index.html", links=dog_links)
+    return render_template("index.html", links=sorted(dog_links, key=lambda x : -x["score"]))
+
+@app.post("/create")
+def create():
+    data = request.get_json()
+    title = data.get("title", "").strip()
+    url = data.get("url", "").strip()
+    
+    if not title or len(title) == 0:
+        return jsonify({"error": "Title is required"}), 400
+    
+    if len(title) > 200:  # Reasonable limit
+        return jsonify({"error": "Title is too long (max 200 characters)"}), 400
+    
+    if not url or len(url) == 0:
+        return jsonify({"error": "URL is required"}), 400
+    
+    # Validate URL starts with http:// or https://
+    if not url.startswith("http://") and not url.startswith("https://"):
+        return jsonify({"error": "URL must start with http:// or https://"}), 400
+    
+    # Check if URL already exists
+    for link in dog_links:
+        if link["url"] == url:
+            return jsonify({"error": "This URL already exists"}), 400
+    
+    # If all validation passes, create the new link
+    new_link = {
+        "title": title,
+        "url": url,
+        "score": 1
+    }
+    dog_links.append(new_link)
+    
+    return jsonify({"success": True}), 201
 
 @app.post("/vote")
 def vote():

@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
@@ -34,3 +34,19 @@ dog_links = [
 @app.get("/")
 def homepage():
     return render_template("index.html", links=dog_links)
+
+@app.post("/vote")
+def vote():
+    data = request.get_json()
+    url = data.get("url")
+    direction = data.get("direction")
+    
+    for post in dog_links:
+        if post["url"] == url:
+            if direction == "up":
+                post["score"] += 1
+            elif direction == "down":
+                post["score"] -= 1
+            return jsonify({"score": post["score"]})
+    
+    return jsonify({"error": "Link not found"}), 404

@@ -91,9 +91,9 @@
         {% for link in links %}
         <li>
           <div class="votes">
-            <button class="up">▲</button>
-            <div class="score" data-score>{{ link.score }}</div>
-            <button class="down">▼</button>
+            <button class="up" onclick="vote('{{ link.url }}', 'up')">▲</button>
+            <div class="score" data-score data-url="{{ link.url }}">{{ link.score }}</div>
+            <button class="down" onclick="vote('{{ link.url }}', 'down')">▼</button>
           </div>
           <div class="content">
             <p class="title">
@@ -113,5 +113,48 @@
         {% endfor %}
       </ul>
     </main>
+
+    <script>
+      function vote(url, direction) {
+        fetch('/vote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: url, direction: direction })
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Update the score for this specific link
+          const scoreElement = document.querySelector(`[data-url="${url}"]`);
+          if (scoreElement) {
+            scoreElement.textContent = data.score;
+          }
+          // Re-sort the list after voting
+          sortByVotes();
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      }
+
+      function sortByVotes() {
+        const ul = document.querySelector('ul');
+        const items = Array.from(ul.querySelectorAll('li'));
+        
+        // Sort items by their score (highest first)
+        items.sort((a, b) => {
+          const scoreA = parseInt(a.querySelector('.score').textContent) || 0;
+          const scoreB = parseInt(b.querySelector('.score').textContent) || 0;
+          return scoreB - scoreA; // Descending order (highest first)
+        });
+        
+        // Re-append sorted items to the list
+        items.forEach(item => ul.appendChild(item));
+      }
+      
+      // Sort on page load
+      document.addEventListener('DOMContentLoaded', sortByVotes);
+    </script>
   </body>
 </html>
